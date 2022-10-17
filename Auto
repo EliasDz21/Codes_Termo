@@ -1,0 +1,140 @@
+#include "BluetoothSerial.h"
+#include "Adafruit_GFX.h"     
+#include "Adafruit_ILI9341.h" 
+
+String  DATA;
+#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+#endif
+
+BluetoothSerial SerialBT;
+
+#define MAX_POSITION 0x7FFFFFFF // maximum of position we can set (long type)
+
+#define TFT_DC 10              
+#define TFT_CS 8           
+#define TFT_RST 9
+#define TFT_MISO 12         
+#define TFT_MOSI 11           
+#define TFT_CLK 13            
+
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_RST, TFT_MISO);
+
+#define GREEN  0x07E0
+#define RED    0xF800
+#define WHITE  0xFFFF
+#define BLACK  0x0000
+#define CYAN   0x07FF
+#define BLUE 0x001F
+
+const int DIR = 27;
+const int STEP = 14;
+const int steps_per_rev = 1900;
+const int back = 5700;
+
+void setup(){
+  DATA = "";
+
+  Serial.begin(9600);
+  SerialBT.begin("ESP32test");
+  pinMode(STEP, OUTPUT);
+  pinMode(DIR, OUTPUT);
+
+  // LCD display Setup
+  tft.begin();                     
+  tft.setRotation(3);           
+ 
+  tft.fillScreen(WHITE);
+  tft.fillRect(10,10,300,70,BLACK);
+  tft.fillRect(15,15,290,60,WHITE);
+  tft.setTextColor(BLUE);
+  tft.setTextSize(3);
+  tft.setCursor(20,30);
+  tft.println("Bio");
+  tft.setTextColor(BLACK);
+  tft.setCursor(80,30);
+  tft.println("mechatronics");
+  tft.fillRect(20,125,110,80,BLACK);
+  tft.fillRect(25,130,100,70,WHITE);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  tft.setCursor(35,155);
+  tft.println("Running");
+  tft.fillRect(180,125,110,80,BLACK);
+  tft.fillRect(185,130,100,70,WHITE);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  tft.setCursor(215,155);
+  tft.println("Stop");
+  
+}
+
+void loop(){
+
+  if (SerialBT.available()) {
+      DATA = (SerialBT.readString());
+      Serial.println("NEW DATA:");
+      Serial.println(DATA);
+
+      if(DATA == "ON"){
+        Play();
+      }
+  }
+}
+
+void Play(){
+
+  tft.fillRect(25,130,100,70,GREEN);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  tft.setCursor(35,155);
+  tft.println("Running");
+  tft.fillRect(185,130,100,70,WHITE);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  tft.setCursor(215,155);
+  tft.println("Stop");
+
+  digitalWrite(DIR, HIGH);
+  for(int i = 0; i<steps_per_rev; i++){
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(600);
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(600);
+  }
+  delay(3000);
+  for(int i = 0; i<steps_per_rev; i++){
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(600);
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(600);
+  }
+  delay(3000);
+  for(int i = 0; i<steps_per_rev; i++){
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(600);
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(600);
+  }
+  delay(3000);
+  digitalWrite(DIR, LOW);
+  for(int j=0; j<steps_per_rev; j++){
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(800);
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(800);
+  }
+  delay(1000);
+
+  tft.fillRect(25,130,100,70,WHITE);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  tft.setCursor(35,155);
+  tft.println("Running");
+  tft.fillRect(185,130,100,70,RED);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  tft.setCursor(215,155);
+  tft.println("Stop");
+  
+}
